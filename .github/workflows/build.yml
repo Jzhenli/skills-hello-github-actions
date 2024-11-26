@@ -79,13 +79,13 @@ jobs:
       - name: Copy ARM executable to host
         run: |
           sudo mkdir -p /github/workspace/hello_arm/
-          sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello_arm/
+          sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello_arm/hello.bin
 
       - name: Upload ARM Executable
         uses: actions/upload-artifact@v4
         with:
           name: arm-executable
-          path: hello_arm/hello
+          path: hello_arm/hello.bin
 
       - name: Clean up chroot environment
         run: |
