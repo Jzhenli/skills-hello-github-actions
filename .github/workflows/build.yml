@@ -67,7 +67,7 @@ jobs:
 
       - name: Install Nuitka in ARM chroot
         run: |
-          sudo chroot /mnt/arm-rootfs /bin/bash -c "pip3 install nuitka"
+          sudo chroot /mnt/arm-rootfs /bin/bash -c "pip3 install nuitka==1.0.6 orderedset==2.0.3"
 
       - name: Compile for ARMv7
         run: |
