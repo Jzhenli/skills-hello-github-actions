@@ -1,33 +1,34 @@
-name: Build for Raspberry Pi
+name: Build ARMv7 Python Script
 
 on:
   push:
     branches:
-      - main  # 登录推送的分支
-  pull_request:
+      - main
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # 使用Ubuntu的最新版本
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Build Docker image
+    - name: Install QEMU
       run: |
-        docker build -t hello-rpi .
+        sudo apt-get update
+        sudo apt-get install -y qemu binfmt-support qemu-user-static
 
-    - name: Run Docker container
+    - name: Register QEMU
       run: |
-        docker run --name hello-rpi-container hello-rpi
+        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
-    - name: Copy compiled executable
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker Image
       run: |
-        docker cp hello-rpi-container:/app/output /tmp/hello-output
+        docker buildx build --platform linux/arm/v7 --load -t my-python-arm-image .
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: hello-executable
-        path: /tmp/hello-output
+    - name: Run the ARM Docker Image
+      run: |
+        docker run --rm my-python-arm-image nuitka --standalone --onefile --output-dir=output  hello.py
