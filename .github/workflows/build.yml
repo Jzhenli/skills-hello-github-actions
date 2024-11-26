@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up QEMU and debootstrap
         run: |
@@ -57,9 +57,9 @@ jobs:
           sudo mount --bind /sys /mnt/arm-rootfs/sys
           sudo mount --bind /proc /mnt/arm-rootfs/proc
 
-      - name: Install Python 3.9 in ARM chroot
+      - name: Install utilities in ARM chroot
         run: |
-          sudo chroot /mnt/arm-rootfs /bin/bash -c "apt-get update && apt-get install -y python3.9 python3.9-dev python3.9-distutils"
+          sudo chroot /mnt/arm-rootfs /bin/bash -c "apt-get update && apt-get install -y wget python3.9 python3.9-dev python3.9-distutils"
 
       - name: Ensure 'pip' is installed for Python 3.9 in ARM chroot
         run: |
@@ -78,7 +78,7 @@ jobs:
           sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello.arm
 
       - name: Upload ARM Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: arm-executable
           path: hello.arm
