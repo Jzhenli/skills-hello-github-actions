@@ -17,7 +17,7 @@
 
 
 # 使用ARM架构的Python基础镜像
-FROM arm32v7/python:3.8-slim
+FROM arm32v7/python:3.9-slim-bullseye
 
 # 设置工作目录
 WORKDIR /app
