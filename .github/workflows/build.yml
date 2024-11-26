@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build-windows:
+  build-windows_x64:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
@@ -34,7 +34,7 @@ jobs:
           name: windows-executable
           path: hello.dist/hello.exe
 
-  build-raspberry-pi:
+  build-linux_armv7:
     runs-on: ubuntu-latest
     env:
       QEMU_ARCH: arm
@@ -77,14 +77,13 @@ jobs:
 
       - name: Copy ARM executable to host
         run: |
-          sudo mkdir -p /github/workspace/hello.arm
-          sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello.arm
+          sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello.bin
 
       - name: Upload ARM Executable
         uses: actions/upload-artifact@v4
         with:
           name: arm-executable
-          path: hello.arm/*.bin
+          path: hello.bin
 
       - name: Clean up chroot environment
         run: |
