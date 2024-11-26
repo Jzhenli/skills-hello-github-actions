@@ -77,7 +77,7 @@ jobs:
 
       - name: Copy ARM executable to host
         run: |
-          mkdir -p /github/workspace/hello.arm
+          sudo mkdir -p /github/workspace/hello.arm
           sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello.arm
 
       - name: Upload ARM Executable
