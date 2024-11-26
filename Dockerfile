@@ -1,11 +1,12 @@
 # 使用适合树莓派2的镜像
-FROM balenalib/raspberrypi2-alpine:latest
+FROM arm32v7/python:3.9-buster
 
 # 更新包列表并安装必要的依赖
-RUN apk add --no-cache \
-    build-base \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
     python3-dev \
-    py3-pip
+    python3-pip
 
 # 安装Nuitka
 RUN pip3 install nuitka
