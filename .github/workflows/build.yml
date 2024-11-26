@@ -28,7 +28,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-arm-linux-gnueabihf  # 安装ARM交叉编译工具链
-        nuitka --follow-imports --plugin-enable=pylint-warn-implicit --python-flag=--no-warn-script-location --output-dir=output --target-arch=armv7l hello.py  # 编译
+        nuitka  --standalone --onefile --output-dir=output --target-arch=armv7l hello.py  # 编译
       
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
