@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -78,7 +78,7 @@ jobs:
 
       - name: Copy ARM executable to host
         run: |
-          sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello.bin /github/workspace/hello.bin
+          sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello.bin
 
       - name: Upload ARM Executable
         uses: actions/upload-artifact@v4
