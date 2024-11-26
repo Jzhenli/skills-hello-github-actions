@@ -1,34 +1,92 @@
-name: Build ARMv7 Python Script
+name: Build and Compile Python Application
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Nuitka
+        run: |
+          python -m pip install nuitka
+
+      - name: Compile for Windows
+        run: |
+          nuitka --standalone --onefile hello.py
+
+      - name: Upload Windows Executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-executable
+          path: hello.dist/hello.exe
+
+  build-raspberry-pi:
     runs-on: ubuntu-latest
+    env:
+      QEMU_ARCH: arm
+      QEMU_STATIC: /usr/bin/qemu-arm-static
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Install QEMU
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y qemu binfmt-support qemu-user-static
+      - name: Set up QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
 
-    - name: Register QEMU
-      run: |
-        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - name: Set up ARM chroot environment
+        run: |
+          sudo debootstrap --arch=armhf --variant=buildd buster /mnt/arm-rootfs http://raspbian.raspberrypi.org/raspbian/
+          sudo cp /usr/bin/qemu-arm-static /mnt/arm-rootfs/usr/bin/
+          sudo mount --bind /dev /mnt/arm-rootfs/dev
+          sudo mount --bind /sys /mnt/arm-rootfs/sys
+          sudo mount --bind /proc /mnt/arm-rootfs/proc
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Install Python 3.9 in ARM chroot
+        run: |
+          sudo chroot /mnt/arm-rootfs /bin/bash -c "apt-get update && apt-get install -y python3.9 python3.9-dev python3.9-distutils"
 
-    - name: Build Docker Image
-      run: |
-        docker buildx build --platform linux/arm/v7 --load -t my-python-arm-image .
+      - name: Ensure 'pip' is installed for Python 3.9 in ARM chroot
+        run: |
+          sudo chroot /mnt/arm-rootfs /bin/bash -c "wget https://bootstrap.pypa.io/get-pip.py && python3.9 get-pip.py && rm get-pip.py"
 
-    - name: Run the ARM Docker Image
-      run: |
-        docker run --rm my-python-arm-image nuitka --standalone --onefile --output-dir=output  hello.py
+      - name: Install Nuitka in ARM chroot
+        run: |
+          sudo chroot /mnt/arm-rootfs /bin/bash -c "pip3 install nuitka"
+
+      - name: Compile for ARMv7
+        run: |
+          sudo chroot /mnt/arm-rootfs /bin/bash -c "cd /github/workspace && nuitka --standalone --onefile hello.py"
+
+      - name: Copy ARM executable to host
+        run: |
+          sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello.arm
+
+      - name: Upload ARM Executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: arm-executable
+          path: hello.arm
+
+      - name: Clean up chroot environment
+        run: |
+          sudo umount /mnt/arm-rootfs/dev
+          sudo umount /mnt/arm-rootfs/sys
+          sudo umount /mnt/arm-rootfs/proc
+          sudo umount /mnt/arm-rootfs
+          sudo rm -rf /mnt/arm-rootfs
