@@ -74,10 +74,11 @@ jobs:
           sudo chroot /mnt/arm-rootfs /bin/bash -c "mkdir -p /github/workspace"
           sudo cp -r . /mnt/arm-rootfs/github/workspace
           sudo chroot /mnt/arm-rootfs /bin/bash -c "cd /github/workspace && python3.9 -m nuitka --standalone --onefile hello.py"
+          sudo chroot /mnt/arm-rootfs /bin/bash -c "ls /github/workspace/hello.dist"
 
       - name: Copy ARM executable to host
         run: |
-          sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello.bin
+          sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello.bin /github/workspace/hello.bin
 
       - name: Upload ARM Executable
         uses: actions/upload-artifact@v4
@@ -87,8 +88,8 @@ jobs:
 
       - name: Clean up chroot environment
         run: |
-          sudo umount /mnt/arm-rootfs/dev
-          sudo umount /mnt/arm-rootfs/sys
-          sudo umount /mnt/arm-rootfs/proc
-          sudo umount /mnt/arm-rootfs
+          if mountpoint -q /mnt/arm-rootfs/dev; then sudo umount /mnt/arm-rootfs/dev; fi
+          if mountpoint -q /mnt/arm-rootfs/sys; then sudo umount /mnt/arm-rootfs/sys; fi
+          if mountpoint -q /mnt/arm-rootfs/proc; then sudo umount /mnt/arm-rootfs/proc; fi
+          if mountpoint -q /mnt/arm-rootfs; then sudo umount /mnt/arm-rootfs; fi
           sudo rm -rf /mnt/arm-rootfs
