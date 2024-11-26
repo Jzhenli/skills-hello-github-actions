@@ -42,16 +42,16 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up QEMU and debootstrap
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-user-static debootstrap
 
-      - name: Set up ARM chroot environment
+      - name: Set up ARM chroot environment (Bullseye)
         run: |
-          sudo debootstrap --arch=armhf --variant=buildd buster /mnt/arm-rootfs http://raspbian.raspberrypi.org/raspbian/
+          sudo debootstrap --arch=armhf --variant=buildd bullseye /mnt/arm-rootfs http://raspbian.raspberrypi.org/raspbian/
           sudo cp /usr/bin/qemu-arm-static /mnt/arm-rootfs/usr/bin/
           sudo mount --bind /dev /mnt/arm-rootfs/dev
           sudo mount --bind /sys /mnt/arm-rootfs/sys
@@ -78,7 +78,7 @@ jobs:
           sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello.arm
 
       - name: Upload ARM Executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: arm-executable
           path: hello.arm
