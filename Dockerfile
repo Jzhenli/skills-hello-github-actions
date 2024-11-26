@@ -2,7 +2,7 @@
 FROM arm32v7/python:3.9-buster
 
 # 更新包列表并安装必要的依赖
-RUN apt-get update && \
+RUN sudo apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
