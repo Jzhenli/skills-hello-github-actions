@@ -19,6 +19,19 @@
 # 使用ARM架构的Python基础镜像
 FROM arm32v7/python:3.9-buster
 
+# 安装编译所需的依赖
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    build-essential \
+    python3-dev \
+    libpython3-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
+RUN pip install --no-cache-dir nuitka
+
 # 设置工作目录
 WORKDIR /app
 
