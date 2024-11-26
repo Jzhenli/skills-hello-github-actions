@@ -1,27 +1,27 @@
-name: Build Python Program for Raspberry Pi 2
+name: Compile Python Application
 
-on: 
+on:
   push:
-    branches:
-      - main  # 监听 main 分支的推送事件
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-      - name: Build ARM image with Nuitka
-        run: |
-          docker buildx build --platform linux/arm/v7 --output=type=local,dest=./output . 
-      
-      - name: Upload Generated Files
-        uses: actions/upload-artifact@v4
-        with:
-          name: arm-built-binary
-          path: ./output
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: Dockerfile
+        push: false
+        tags: |
+          # 如果不使用Docker Hub，可以将push设置为false
