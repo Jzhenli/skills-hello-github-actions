@@ -24,4 +24,3 @@ jobs:
         file: Dockerfile
         push: false
         tags: |
-          # 如果不使用Docker Hub，可以将push设置为false
