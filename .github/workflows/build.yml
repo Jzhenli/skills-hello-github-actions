@@ -13,12 +13,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install Nuitka
         run: |
@@ -29,7 +29,7 @@ jobs:
           nuitka --standalone --onefile hello.py
 
       - name: Upload Windows Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-executable
           path: hello.dist/hello.exe
@@ -42,12 +42,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up QEMU
+      - name: Set up QEMU and debootstrap
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-user-static
+          sudo apt-get install -y qemu-user-static debootstrap
 
       - name: Set up ARM chroot environment
         run: |
@@ -78,7 +78,7 @@ jobs:
           sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello.arm
 
       - name: Upload ARM Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: arm-executable
           path: hello.arm
