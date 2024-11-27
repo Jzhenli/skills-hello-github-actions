@@ -74,37 +74,49 @@ jobs:
         run: |
           sudo chroot /mnt/arm-rootfs /bin/bash -c "mkdir -p /github/workspace"
           sudo cp -r . /mnt/arm-rootfs/github/workspace
-          sudo chroot /mnt/arm-rootfs /bin/bash -c "cd /github/workspace && python3.9 -m nuitka --standalone --onefile hello.py"
-          sudo chroot /mnt/arm-rootfs /bin/bash -c "ls -lF /github/workspace/hello.dist"
+          sudo chroot /mnt/arm-rootfs /bin/bash -c "cd /github/workspace && python3.9 -m nuitka --module app --include-package=app --show-progress  --output-dir=out --remove-output"
+      #     sudo chroot /mnt/arm-rootfs /bin/bash -c "cd /github/workspace && python3.9 -m nuitka --standalone --onefile hello.py"
+      #     sudo chroot /mnt/arm-rootfs /bin/bash -c "ls -lF /github/workspace/hello.dist"
 
-      - name: Check if hello.dist directory exists
-        run: |
-          sudo chroot /mnt/arm-rootfs /bin/bash -c "ls -ld /github/workspace/hello.dist"
+      # - name: Check if hello.dist directory exists
+      #   run: |
+      #     sudo chroot /mnt/arm-rootfs /bin/bash -c "ls -ld /github/workspace/hello.dist"
 
-      - name: Check if hello file exists
-        run: |
-          sudo chroot /mnt/arm-rootfs /bin/bash -c "ls -l /github/workspace/hello.dist/hello"
+      # - name: Check if hello file exists
+      #   run: |
+      #     sudo chroot /mnt/arm-rootfs /bin/bash -c "ls -l /github/workspace/hello.dist/hello"
+
+      # - name: Copy ARM executable to host
+      #   run: |
+      #     sudo mkdir -p /github/workspace/hello_arm/
+      #     sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello_arm/hello.bin
+      #     ls -l /github/workspace/hello_arm/
+      #     sudo chmod +x /github/workspace/hello_arm/hello.bin
+
+      # - name: Check if hello_arm directory exists
+      #   run: |
+      #     ls -ld /github/workspace/hello_arm/
+
+      # - name: Check if hello.bin file exists
+      #   run: |
+      #     ls -l /github/workspace/hello_arm/hello.bin
+
+      # - name: Upload ARM Executable
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: arm-executable
+      #     path: /github/workspace/hello_arm/hello.bin
 
       - name: Copy ARM executable to host
         run: |
-          sudo mkdir -p /github/workspace/hello_arm/
-          sudo cp /mnt/arm-rootfs/github/workspace/hello.dist/hello /github/workspace/hello_arm/hello.bin
-          ls -l /github/workspace/hello_arm/
-          sudo chmod +x /github/workspace/hello_arm/hello.bin
-
-      - name: Check if hello_arm directory exists
-        run: |
-          ls -ld /github/workspace/hello_arm/
-
-      - name: Check if hello.bin file exists
-        run: |
-          ls -l /github/workspace/hello_arm/hello.bin
+          sudo mkdir -p /github/workspace/out/
+          sudo cp /mnt/arm-rootfs/github/workspace/out/*.so /github/workspace/out/
 
       - name: Upload ARM Executable
         uses: actions/upload-artifact@v4
         with:
           name: arm-executable
-          path: /github/workspace/hello_arm/hello.bin
+          path: /github/workspace/out/*.so
 
       - name: Clean up chroot environment
         run: |
