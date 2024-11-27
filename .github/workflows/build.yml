@@ -74,7 +74,7 @@ jobs:
           sudo chroot /mnt/arm-rootfs /bin/bash -c "mkdir -p /github/workspace"
           sudo cp -r . /mnt/arm-rootfs/github/workspace
           sudo chroot /mnt/arm-rootfs /bin/bash -c "cd /github/workspace && python3.9 -m nuitka --standalone --onefile hello.py"
-          sudo chroot /mnt/arm-rootfs /bin/bash -c "ls /github/workspace/hello.dist"
+          sudo chroot /mnt/arm-rootfs /bin/bash -c "ls -R /github/workspace/hello.dist"
 
       - name: Copy ARM executable to host
         run: |
