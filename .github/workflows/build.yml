@@ -103,7 +103,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: arm-executable
-          path: hello_arm/hello.bin
+          path: /github/workspace/hello_arm/hello.bin
 
       - name: Clean up chroot environment
         run: |
