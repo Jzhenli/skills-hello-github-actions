@@ -45,8 +45,49 @@ jobs:
       - name: Upload Windows Executable
         uses: actions/upload-artifact@v4
         with:
-          name: windows-executable
+          name: win64
           path: dist/*.zip
+
+
+  build-armv7:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build for ARMv7
+        uses: uraimo/run-on-arch-action@v3
+        id: build4arm7
+        with:
+          architecture: armv7
+          distro: bullseye
+          githubToken: ${{ github.token }}
+          run: |
+            apt-get update && apt-get install -y \
+              git \
+              gcc \
+              python3-pip \
+              python3-dev \
+              patchelf
+
+            python3 -m pip install --upgrade pip
+            pip3 install briefcase==0.3.23 nuitka==2.4.11 --extra-index-url https://www.piwheels.org/simple
+
+            cd src/$PROJECT_NAME
+            python3 -m nuitka --module app --include-package=app --output-dir=dist --remove-output
+            cp .\dist\*.so .
+            rm -rf .\dist
+
+            cd ..\..
+            briefcase create
+            briefcase build
+            briefcase package
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: arm7
+          path: dist/*.deb
 
 #  build-linux_armv7:
 #    runs-on: ubuntu-latest
