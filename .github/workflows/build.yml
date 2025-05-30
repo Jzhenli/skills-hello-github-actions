@@ -171,6 +171,10 @@ jobs:
           cd "src/$PROJECT_NAME"
           python -m nuitka --module app --include-package=app --output-dir=dist --remove-output
           cp ./dist/*.so ../../dist/
+          cd ../../dist/
+          mv app.cpython-310.so app.so
+          patchelf --set-rpath '' app.so
+          patchelf --replace-needed  libpython3.10.so.1.0 libpython3.10.so app.so
 
       - uses: actions/upload-artifact@v4.6.0
         with:
