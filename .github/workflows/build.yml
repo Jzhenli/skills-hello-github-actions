@@ -162,6 +162,11 @@ jobs:
         run: |
           touch artifact
           python --version
+          pkg uninstall python -y
+          pkg i tur-repo -y
+          pkg i python3.10 -y
+          ln -sf ${PREFIX}/bin/python3.10 ${PREFIX}/bin/python
+          python --version
       - uses: actions/upload-artifact@v4.6.0
         with:
           name: artifact-${{ matrix.architecture }}
