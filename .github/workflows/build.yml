@@ -160,15 +160,16 @@ jobs:
           /entrypoint.sh pkg install -y ninja clang git patchelf ccache tur-repo
           /entrypoint.sh pkg i python3.10 -y
           ln -sf ${PREFIX}/bin/python3.10 ${PREFIX}/bin/python
+          ln -sf ${PREFIX}/bin/pip3.10 ${PREFIX}/bin/pip
           /entrypoint.sh pip install nuitka
       - name: build
         run: |
           touch artifact
-          /entrypoint.sh python --version
+          python --version
  
           mkdir out
           cd "src/$PROJECT_NAME"
-          /entrypoint.sh python -m nuitka --module app --include-package=app --output-dir=dist --remove-output
+          python -m nuitka --module app --include-package=app --output-dir=dist --remove-output
           cp ./dist/*.so ../../out
 
       - uses: actions/upload-artifact@v4.6.0
