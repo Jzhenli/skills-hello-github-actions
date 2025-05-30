@@ -164,10 +164,11 @@ jobs:
       - name: build
         run: |
           touch artifact
-          python --version
+          /entrypoint.sh python --version
+ 
           mkdir out
           cd "src/$PROJECT_NAME"
-          python -m nuitka --module app --include-package=app --output-dir=dist --remove-output
+          /entrypoint.sh python -m nuitka --module app --include-package=app --output-dir=dist --remove-output
           cp ./dist/*.so ../../out
 
       - uses: actions/upload-artifact@v4.6.0
