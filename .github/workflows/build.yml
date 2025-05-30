@@ -158,6 +158,7 @@ jobs:
           # the entrypoint.
           /entrypoint.sh pkg install -y ninja clang git tur-repo
           /entrypoint.sh pkg i python3.10 -y
+          ln -sf ${PREFIX}/bin/python3.10 ${PREFIX}/bin/python
           /entrypoint.sh pip install meson
       - name: build
         run: |
