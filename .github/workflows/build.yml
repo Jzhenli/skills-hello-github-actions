@@ -156,16 +156,12 @@ jobs:
         run: |
           # pkg/pip need to be prefixed with /entrypoint.sh because GHA overrode
           # the entrypoint.
-          /entrypoint.sh pkg install -y ninja clang python git
+          /entrypoint.sh pkg install -y ninja clang git tur-repo
+          /entrypoint.sh pkg i python3.10 -y
           /entrypoint.sh pip install meson
       - name: build
         run: |
           touch artifact
-          python --version
-          pkg uninstall python -y
-          pkg i tur-repo -y
-          pkg i python3.10 -y
-          ln -sf ${PREFIX}/bin/python3.10 ${PREFIX}/bin/python
           python --version
       - uses: actions/upload-artifact@v4.6.0
         with:
