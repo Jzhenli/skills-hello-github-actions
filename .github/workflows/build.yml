@@ -159,7 +159,9 @@ jobs:
           /entrypoint.sh pkg install -y ninja clang python git
           /entrypoint.sh pip install meson
       - name: build
-        run: touch artifact
+        run: |
+          touch artifact
+          python --version
       - uses: actions/upload-artifact@v4.6.0
         with:
           name: artifact-${{ matrix.architecture }}
