@@ -1,9 +1,9 @@
 # This project was generated with 0.3.23 using template: https://github.com/beeware/briefcase-template @ v0.3.23
 [tool.briefcase]
 project_name = "Hello World"
-bundle = "com.example"
+bundle = "com.adveco"
 version = "0.0.1"
-url = "https://example.com/helloworld"
+url = "https://adveco.com/helloworld"
 license.file = "LICENSE"
 author = "Jzhenli"
 author_email = "jzhenl@foxmail.com"
@@ -19,7 +19,6 @@ sources = [
 test_sources = [
     "tests",
 ]
-console_app = true
 
 requires = [
     # Add your cross-platform app requirements here
@@ -82,7 +81,9 @@ flatpak_sdk = "org.freedesktop.Sdk"
 
 [tool.briefcase.app.helloworld.windows]
 requires = [
-    # Add your Windows-specific app requirements here
+    "toga-winforms~=0.5.0",
+    "fastapi-offline==1.7.3",
+    "uvicorn==0.34.0"
 ]
 
 # Mobile deployments
@@ -90,7 +91,13 @@ requires = [
 supported = false
 
 [tool.briefcase.app.helloworld.android]
-supported = false
+requires = [
+    "--extra-index-url=https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple",
+    "toga-android~=0.5.0",
+    "pydantic~=1.10.18",
+    "fastapi-offline==1.7.3",
+    "uvicorn==0.32.1"
+]
 
 # Web deployments
 [tool.briefcase.app.helloworld.web]
