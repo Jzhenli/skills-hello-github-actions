@@ -339,7 +339,7 @@ jobs:
 
       - name: Build App
         run: |
-          briefcase create android
+          briefcase create android -C "build_gradle_extra_content = \"android.defaultConfig.ndk.abiFilters = ['arm64-v8a']\""
           briefcase build android 
 
       - name: Package App
