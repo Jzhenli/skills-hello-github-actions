@@ -310,7 +310,7 @@ defaults:
 
 jobs:
   ARM64:
-    name: Test and Package - Android
+    name: Android ARM64
     runs-on: ubuntu-latest  # 直接指定 Android 构建环境
 
     steps:
@@ -343,12 +343,6 @@ jobs:
           briefcase build android
           briefcase package android -p debug-apk
 
-      - name: Build and Package arm32-App
-        run: |
-          briefcase create android -C "build_gradle_extra_content = \"android.defaultConfig.ndk.abiFilters = ['armeabi-v7a']\""
-          briefcase build android
-          briefcase package android -p debug-apk
-
       - name: Upload App
         uses: actions/upload-artifact@v4
         with:
@@ -364,7 +358,7 @@ jobs:
           path: logs/*
   
   ARM32:
-    name: Test and Package - Android
+    name: Android ARM32
     runs-on: ubuntu-latest  # 直接指定 Android 构建环境
 
     steps:
