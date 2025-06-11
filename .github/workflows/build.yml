@@ -102,7 +102,7 @@ env:
   PROJECT_NAME: helloworld
 jobs:
   # This is what is currently necessary to make termux-docker work with GHA.
-  working:
+  build-android-components:
     strategy:
       matrix:
         include:
@@ -180,7 +180,29 @@ jobs:
         with:
           name: artifact-${{ matrix.architecture }}
           path: dist/*.so
-          
+
+  build-android-app:
+    needs: build-android-components  # 显式声明依赖关系
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: checkout components
+      uses: actions/download-artifact@v4
+      with:
+        path: dependencies/
+
+    - name: Build and Package App
+      run: |
+        ls -a /dependencies
+
+    - name: Upload App
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-app
+        path: dependencies        
 
 # name: CI
 # on:
