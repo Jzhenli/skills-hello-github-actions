@@ -196,7 +196,7 @@ jobs:
 
     - name: Build and Package App
       run: |
-        ls -a /dependencies
+        ls -l
 
     - name: Upload App
       uses: actions/upload-artifact@v4
