@@ -180,29 +180,6 @@ jobs:
         with:
           name: artifact-${{ matrix.architecture }}
           path: dist/*.so
-
-  # build-android-app:
-  #   needs: build-android-components  # 显式声明依赖关系
-  #   runs-on: ubuntu-latest
-    
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
-
-  #   - name: checkout components
-  #     uses: actions/download-artifact@v4
-  #     with:
-  #       path: dependencies/
-
-  #   - name: Build and Package App
-  #     run: |
-  #       ls -l
-
-  #   - name: Upload App
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: android-app
-  #       path: dependencies
         
   build-android-ARM64:
     needs: build-android-components # 显式声明依赖关系
@@ -272,6 +249,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
+      - name: checkout components
+        uses: actions/download-artifact@v4
+        with:
+          path: dependencies/
+
+      - name: replace app folder with so
+        run: |
+          rm -rf "src/$PROJECT_NAME/app"
+          cp -r dependencies/artifact-arm/*.so "src/$PROJECT_NAME"
 
       - name: Setup Python
         uses: actions/setup-python@v4
