@@ -241,7 +241,7 @@ jobs:
           name: Log-Failure-Android
           path: logs/*        
 
-  ARM32:
+  build-android-ARM32:
     needs: build-android-components # 显式声明依赖关系
     name: Android ARM32
     runs-on: ubuntu-latest
@@ -299,6 +299,91 @@ jobs:
         with:
           name: Log-Failure-Android
           path: logs/*
+
+  build-Win64:
+    name: Win64
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Setup Environment
+        run: |
+          pip install briefcase==0.3.23 nuitka==1.0.6 ordered-set==4.1.0
+
+      - name: compile app to pyd with nuitka
+        shell: cmd
+        run: |
+          cd src/%PROJECT_NAME%
+          python -m nuitka --module app --include-package=app --output-dir=dist --remove-output
+          copy .\dist\*.pyd .
+          rmdir /S /Q .\dist
+          rmdir /S /Q .\app
+
+      - name: package coode with briefcase
+        shell: cmd
+        run: |
+          briefcase create
+          briefcase build
+          briefcase package -p zip
+
+      - name: Upload Windows Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Win64
+          path: dist/*.zip
+
+
+  build-ARMv7:
+    name: ARMv7
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build for ARMv7
+        uses: uraimo/run-on-arch-action@v3
+        id: build4arm7
+        with:
+          arch: armv7
+          distro: bullseye
+          githubToken: ${{ github.token }}
+          env: '{ 
+              "PROJECT_NAME": "${{ env.PROJECT_NAME }}",
+              "PYPI_EXTRA_URL": "https://www.piwheels.org/simple"
+            }'
+          run: |
+            apt-get update && apt-get install -y \
+              git \
+              gcc \
+              python3-pip \
+              python3-dev \
+              patchelf
+
+            python3 -m pip install --upgrade pip
+            pip3 install briefcase==0.3.23 nuitka==2.4.11 --extra-index-url $PYPI_EXTRA_URL
+
+            cd "src/$PROJECT_NAME"
+            python3 -m nuitka --module app --include-package=app --output-dir=dist --remove-output
+            cp ./dist/*.so .
+            rm -rf dist
+            rm -rf app
+
+            cd ../..
+            briefcase create
+            briefcase build
+            briefcase package
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ARMv7
+          path: dist/*.deb
 
 
 # name: CI
