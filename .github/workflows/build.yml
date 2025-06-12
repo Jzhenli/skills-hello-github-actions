@@ -150,7 +150,7 @@ jobs:
         run: |
           /entrypoint.sh pkg install -y nodejs-lts
           ln -sf ${PREFIX}/bin /__e/node20/bin
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v4
       - name: fix permissions of repository after actions/checkout, which ran as root user, while entrypoint.sh activates system user (1000)
         run: chown -R 1000:1000 .
       - name: setup
@@ -176,7 +176,7 @@ jobs:
           patchelf --set-rpath '' app.so
           patchelf --replace-needed  libpython3.10.so.1.0 libpython3.10.so app.so
 
-      - uses: actions/upload-artifact@v4.6.0
+      - uses: actions/upload-artifact@v4
         with:
           name: artifact-${{ matrix.architecture }}
           path: dist/*.so
@@ -205,8 +205,9 @@ jobs:
   #       path: dependencies
         
   build-android-ARM64:
-    needs: build-android-components
-    runs-on: ubuntu-latest  # 直接指定 Android 构建环境
+    needs: build-android-components # 显式声明依赖关系
+    name: Android ARM64
+    runs-on: ubuntu-latest 
 
     steps:
       - name: Checkout
@@ -263,6 +264,54 @@ jobs:
           name: Log-Failure-Android
           path: logs/*        
 
+  ARM32:
+    needs: build-android-components # 显式声明依赖关系
+    name: Android ARM32
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Briefcase
+        run: |
+          python -m pip install -U pip setuptools wheel
+          python -m pip install briefcase
+
+      - name: Setup Environment
+        run: |
+          # Use GitHub's preinstalled JDK 17 for Android builds
+          echo JAVA_HOME="${JAVA_HOME_17_X64:-$JAVA_HOME_17_arm64}" | tee -a ${GITHUB_ENV}
+          # Enable KVM permissions for the emulator
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Build and Package arm32-App
+        run: |
+          briefcase create android -C "build_gradle_extra_content = \"android.defaultConfig.ndk.abiFilters = ['armeabi-v7a']\""
+          briefcase build android
+          briefcase package android -p debug-apk
+
+      - name: Upload App
+        uses: actions/upload-artifact@v4
+        with:
+          name: App-Android-ARM32
+          path: dist
+          if-no-files-found: error
+
+      - name: Upload Log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Log-Failure-Android
+          path: logs/*
 
 
 # name: CI
