@@ -18,68 +18,73 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm,aarch64
-
+      
+      - name: Create shared directory
+        run: mkdir -p /tmp/node20
+      
       - name: Build via QEMU
-        uses: uraimo/run-on-arch-action@v3
+        uses: docker://termux/termux-docker:${{ matrix.image_tag }}
         id: build
         with:
-          arch: ${{ matrix.qemu_arch }}
-          distro: alpine_latest
-          githubToken: ${{ github.token }}
-          base_image: termux/termux-docker:${{ matrix.image_tag }}
-          dockerRunArgs: |
-            --memory=2048m
-            --cpus=2
-            -v /tmp/node20:/tmp/node20
-          # 单行环境变量避免格式问题
-          env: "PROJECT_NAME=helloworld TERMUX_MAIN_PACKAGE_FORMAT=debian ANDROID_ROOT=/system ANDROID_DATA=/data PREFIX=/data/data/com.termux/files/usr HOME=/data/data/com.termux/files/home PATH=/data/data/com.termux/files/usr/bin TMPDIR=/data/data/com.termux/files/usr/tmp LANG=en_US.UTF-8 TZ=UTC"
-          run: |
-            # 调试：显示环境变量
-            echo "=== ENVIRONMENT VARIABLES ==="
-            printenv
+          args: >
+            bash -c '
+            # 直接在容器内设置环境变量
+            export PROJECT_NAME=helloworld
+            export TERMUX_MAIN_PACKAGE_FORMAT=debian
+            export ANDROID_ROOT=/system
+            export ANDROID_DATA=/data
+            export PREFIX=/data/data/com.termux/files/usr
+            export HOME=/data/data/com.termux/files/home
+            export PATH=/data/data/com.termux/files/usr/bin
+            export TMPDIR=/data/data/com.termux/files/usr/tmp
+            export LANG=en_US.UTF-8
+            export TZ=UTC
             
             # 1. 准备环境
             echo "Preparing environment..."
-            ln -sf $PREFIX/etc/termux/mirrors/default $PREFIX/etc/termux/chosen_mirrors || true
-            chmod -R o+x $PREFIX/bin || true
+            ln -sf $PREFIX/etc/termux/mirrors/default $PREFIX/etc/termux/chosen_mirrors
+            chmod -R o+x $PREFIX/bin
             
             # 2. 安装依赖
             echo "Installing dependencies..."
-            /entrypoint.sh bash -c "yes | pkg upgrade -y" || true
-            /entrypoint.sh pkg install -y nodejs-lts || true
+            /entrypoint.sh bash -c "yes | pkg upgrade -y"
+            /entrypoint.sh pkg install -y nodejs-lts
             mkdir -p /tmp/node20
-            ln -sf $PREFIX/bin /tmp/node20/bin || true
+            ln -sf $PREFIX/bin /tmp/node20/bin
             
             # 3. 安装构建工具
             echo "Installing build tools..."
-            /entrypoint.sh pkg install -y ninja clang git patchelf ccache tur-repo python3.10 || true
-            ln -sf $PREFIX/bin/python3.10 $PREFIX/bin/python || true
-            ln -sf $PREFIX/bin/pip3.10 $PREFIX/bin/pip || true
+            /entrypoint.sh pkg install -y ninja clang git patchelf ccache tur-repo python3.10
+            ln -sf $PREFIX/bin/python3.10 $PREFIX/bin/python
+            ln -sf $PREFIX/bin/pip3.10 $PREFIX/bin/pip
             
             # 4. 构建项目
             echo "Building project..."
             cd /github/workspace
-            pip install nuitka || true
+            pip install nuitka
             
             mkdir -p dist
             cd "src/$PROJECT_NAME"
-            python -m nuitka --module app --include-package=app --output-dir=dist --remove-output || true
-            cp ./dist/*.so ../../dist/ || true
+            python -m nuitka --module app --include-package=app --output-dir=dist --remove-output
+            cp ./dist/*.so ../../dist/
             cd ../../dist/
-            [ -f app.cpython-310.so ] && mv app.cpython-310.so app.so || true
-            [ -f app.so ] && patchelf --set-rpath '' app.so || true
-            [ -f app.so ] && patchelf --replace-needed libpython3.10.so.1.0 libpython3.10.so app.so || true
+            mv app.cpython-310.so app.so
+            patchelf --set-rpath '' app.so
+            patchelf --replace-needed libpython3.10.so.1.0 libpython3.10.so app.so
             
             # 5. 复制产物到共享目录
             echo "Copying artifacts..."
             mkdir -p /tmp/node20
-            cp *.so /tmp/node20/ || true
-            ls -la /tmp/node20 > /tmp/node20/file-list.log
+            cp *.so /tmp/node20/
+            ls -la /tmp/node20
+            '
+          # 挂载工作区和共享目录
+          mounts: |
+            type=bind,source=${{ github.workspace }},target=/github/workspace
+            type=bind,source=/tmp/node20,target=/tmp/node20
+          memory: 2048M
+          cpus: 2
+          platform: linux/${{ matrix.qemu_arch }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
