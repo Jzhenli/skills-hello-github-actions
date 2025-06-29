@@ -10,8 +10,8 @@ jobs:
         include:
           - architecture: armv7
             image_tag: arm
-          - architecture: aarch64
-            image_tag: aarch64
+          # - architecture: aarch64
+          #   image_tag: aarch64
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
@@ -22,28 +22,34 @@ jobs:
         with:
           platforms: arm,aarch64
       
-      - name: Create shared directory
-        run: mkdir -p /tmp/node20
+      - name: Prepare directory with correct permissions
+        run: |
+          # 创建目录并设置正确权限
+          sudo mkdir -p /tmp/node20
+          sudo chown -R $USER:$USER /tmp/node20
+          sudo chmod -R 755 /tmp/node20
       
       - name: Build via Docker with privileged mode
         run: |
-          # 使用特权模式解决权限问题
           docker run --rm --privileged \
             --dns 8.8.8.8 --dns 8.8.4.4 \
             --memory=2048m --cpus=2 \
+            --user $(id -u):$(id -g) \  # 匹配主机用户ID
             -v "${{ github.workspace }}":/github/workspace \
             -v "/tmp/node20":/tmp/node20 \
             termux/termux-docker:${{ matrix.image_tag }} \
             bash -c '
-              # 设置环境变量
+              set -x  # 启用详细日志
+              
+              # 环境变量设置
               export PROJECT_NAME=helloworld
               export TERMUX_MAIN_PACKAGE_FORMAT=debian
               export ANDROID_ROOT=/system
               export ANDROID_DATA=/data
               export PREFIX=/data/data/com.termux/files/usr
               export HOME=/data/data/com.termux/files/home
-              export PATH=/data/data/com.termux/files/usr/bin
-              export TMPDIR=/data/data/com.termux/files/usr/tmp
+              export PATH=$PREFIX/bin:$PATH
+              export TMPDIR=$PREFIX/tmp
               export LANG=en_US.UTF-8
               export TZ=UTC
               
