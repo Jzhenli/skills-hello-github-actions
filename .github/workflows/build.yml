@@ -29,6 +29,7 @@ jobs:
         run: |
           # 使用特权模式解决权限问题
           docker run --rm --privileged \
+            --dns 8.8.8.8 --dns 8.8.4.4 \
             --memory=2048m --cpus=2 \
             -v "${{ github.workspace }}":/github/workspace \
             -v "/tmp/node20":/tmp/node20 \
