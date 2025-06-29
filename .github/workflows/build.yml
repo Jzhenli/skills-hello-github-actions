@@ -17,21 +17,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Set up QEMU with full permissions
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm,aarch64
-          # 添加额外权限解决 personality() 系统调用问题
-          extra-options: "--security-opt seccomp=unconfined"
       
       - name: Create shared directory
         run: mkdir -p /tmp/node20
       
       - name: Build via Docker with privileged mode
         run: |
-          # 使用 privileged 模式解决权限问题
+          # 使用特权模式解决权限问题
           docker run --rm --privileged \
-            --security-opt seccomp=unconfined \
             --memory=2048m --cpus=2 \
             -v "${{ github.workspace }}":/github/workspace \
             -v "/tmp/node20":/tmp/node20 \
@@ -94,7 +91,7 @@ jobs:
         with:
           name: artifact-${{ matrix.architecture }}
           path: /tmp/node20/*.so
-
+        
 # name: 'Test Termux' # empty name
 # on: [push, pull_request]
 # env:
