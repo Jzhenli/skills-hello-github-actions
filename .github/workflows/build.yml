@@ -8,13 +8,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - architecture: armv7   # 对应原 arm
+          - architecture: armv7
             qemu_arch: arm
             image_tag: arm
           - architecture: aarch64
             qemu_arch: aarch64
             image_tag: aarch64
-    runs-on: ubuntu-24.04  # 使用标准 x86 runner
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,15 +25,18 @@ jobs:
         with:
           # 架构配置
           arch: ${{ matrix.qemu_arch }}
-          distro: alpine_latest  # 轻量级基础镜像
+          distro: alpine_latest
           githubToken: ${{ github.token }}
-          image: termux/termux-docker:${{ matrix.image_tag }}
+          # 使用 base_image 代替 image
+          base_image: termux/termux-docker:${{ matrix.image_tag }}
           
-          # 资源分配 (根据需求调整)
-          qemuMemory: 2048M
-          qemuCpu: 2
+          # 通过 dockerRunArgs 传递 QEMU 参数
+          dockerRunArgs: |
+            --memory=2048m
+            --cpus=2
+            -v /tmp/node20:/tmp/node20
           
-          # 环境变量
+          # 环境变量格式修正
           env: |
             PROJECT_NAME=${{ env.PROJECT_NAME }}
             TERMUX_MAIN_PACKAGE_FORMAT=debian
@@ -45,10 +48,6 @@ jobs:
             TMPDIR=/data/data/com.termux/files/usr/tmp
             LANG=en_US.UTF-8
             TZ=UTC
-          
-          # 挂载点 (替代原 volumes)
-          mountPath: /tmp/node20
-          hostPath: /tmp/node20
           
           # 构建命令
           run: |
@@ -87,7 +86,6 @@ jobs:
         with:
           name: artifact-${{ matrix.architecture }}
           path: /tmp/node20/*.so
-
 
 # name: 'Test Termux' # empty name
 # on: [push, pull_request]
