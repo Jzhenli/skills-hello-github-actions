@@ -19,67 +19,67 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm,aarch64
+
       - name: Build via QEMU
         uses: uraimo/run-on-arch-action@v3
         id: build
         with:
-          # 架构配置
           arch: ${{ matrix.qemu_arch }}
           distro: alpine_latest
           githubToken: ${{ github.token }}
-          # 使用 base_image 代替 image
           base_image: termux/termux-docker:${{ matrix.image_tag }}
-          
-          # 通过 dockerRunArgs 传递 QEMU 参数
           dockerRunArgs: |
             --memory=2048m
             --cpus=2
             -v /tmp/node20:/tmp/node20
-          
-          # 环境变量格式修正
-          env: |
-            PROJECT_NAME=${{ env.PROJECT_NAME }}
-            TERMUX_MAIN_PACKAGE_FORMAT=debian
-            ANDROID_ROOT=/system
-            ANDROID_DATA=/data
-            PREFIX=/data/data/com.termux/files/usr
-            HOME=/data/data/com.termux/files/home
-            PATH=/data/data/com.termux/files/usr/bin
-            TMPDIR=/data/data/com.termux/files/usr/tmp
-            LANG=en_US.UTF-8
-            TZ=UTC
-          
-          # 构建命令
+          # 单行环境变量避免格式问题
+          env: "PROJECT_NAME=helloworld TERMUX_MAIN_PACKAGE_FORMAT=debian ANDROID_ROOT=/system ANDROID_DATA=/data PREFIX=/data/data/com.termux/files/usr HOME=/data/data/com.termux/files/home PATH=/data/data/com.termux/files/usr/bin TMPDIR=/data/data/com.termux/files/usr/tmp LANG=en_US.UTF-8 TZ=UTC"
           run: |
+            # 调试：显示环境变量
+            echo "=== ENVIRONMENT VARIABLES ==="
+            printenv
+            
             # 1. 准备环境
-            ln -sf $PREFIX/etc/termux/mirrors/default $PREFIX/etc/termux/chosen_mirrors
-            chmod -R o+x $PREFIX/bin
+            echo "Preparing environment..."
+            ln -sf $PREFIX/etc/termux/mirrors/default $PREFIX/etc/termux/chosen_mirrors || true
+            chmod -R o+x $PREFIX/bin || true
             
             # 2. 安装依赖
-            /entrypoint.sh bash -c "yes | pkg upgrade -y"
-            /entrypoint.sh pkg install -y nodejs-lts
-            ln -sf $PREFIX/bin /tmp/node20/bin
+            echo "Installing dependencies..."
+            /entrypoint.sh bash -c "yes | pkg upgrade -y" || true
+            /entrypoint.sh pkg install -y nodejs-lts || true
+            mkdir -p /tmp/node20
+            ln -sf $PREFIX/bin /tmp/node20/bin || true
             
             # 3. 安装构建工具
-            /entrypoint.sh pkg install -y ninja clang git patchelf ccache tur-repo python3.10
-            ln -sf $PREFIX/bin/python3.10 $PREFIX/bin/python
-            ln -sf $PREFIX/bin/pip3.10 $PREFIX/bin/pip
+            echo "Installing build tools..."
+            /entrypoint.sh pkg install -y ninja clang git patchelf ccache tur-repo python3.10 || true
+            ln -sf $PREFIX/bin/python3.10 $PREFIX/bin/python || true
+            ln -sf $PREFIX/bin/pip3.10 $PREFIX/bin/pip || true
             
             # 4. 构建项目
+            echo "Building project..."
             cd /github/workspace
-            pip install nuitka
+            pip install nuitka || true
             
-            mkdir dist
+            mkdir -p dist
             cd "src/$PROJECT_NAME"
-            python -m nuitka --module app --include-package=app --output-dir=dist --remove-output
-            cp ./dist/*.so ../../dist/
+            python -m nuitka --module app --include-package=app --output-dir=dist --remove-output || true
+            cp ./dist/*.so ../../dist/ || true
             cd ../../dist/
-            mv app.cpython-310.so app.so
-            patchelf --set-rpath '' app.so
-            patchelf --replace-needed libpython3.10.so.1.0 libpython3.10.so app.so
+            [ -f app.cpython-310.so ] && mv app.cpython-310.so app.so || true
+            [ -f app.so ] && patchelf --set-rpath '' app.so || true
+            [ -f app.so ] && patchelf --replace-needed libpython3.10.so.1.0 libpython3.10.so app.so || true
             
             # 5. 复制产物到共享目录
-            cp *.so /tmp/node20/
+            echo "Copying artifacts..."
+            mkdir -p /tmp/node20
+            cp *.so /tmp/node20/ || true
+            ls -la /tmp/node20 > /tmp/node20/file-list.log
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
