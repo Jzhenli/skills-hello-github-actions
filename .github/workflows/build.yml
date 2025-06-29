@@ -9,89 +9,87 @@ jobs:
       matrix:
         include:
           - architecture: armv7
-            qemu_arch: arm
             image_tag: arm
           - architecture: aarch64
-            qemu_arch: aarch64
             image_tag: aarch64
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm,aarch64
+      
       - name: Create shared directory
         run: mkdir -p /tmp/node20
       
-      - name: Build via QEMU
-        uses: docker://termux/termux-docker:${{ matrix.image_tag }}
-        id: build
-        with:
-          args: >
+      - name: Build via Docker
+        run: |
+          docker run --rm --memory=2048m --cpus=2 \
+            -v "${{ github.workspace }}":/github/workspace \
+            -v "/tmp/node20":/tmp/node20 \
+            termux/termux-docker:${{ matrix.image_tag }} \
             bash -c '
-            # 直接在容器内设置环境变量
-            export PROJECT_NAME=helloworld
-            export TERMUX_MAIN_PACKAGE_FORMAT=debian
-            export ANDROID_ROOT=/system
-            export ANDROID_DATA=/data
-            export PREFIX=/data/data/com.termux/files/usr
-            export HOME=/data/data/com.termux/files/home
-            export PATH=/data/data/com.termux/files/usr/bin
-            export TMPDIR=/data/data/com.termux/files/usr/tmp
-            export LANG=en_US.UTF-8
-            export TZ=UTC
-            
-            # 1. 准备环境
-            echo "Preparing environment..."
-            ln -sf $PREFIX/etc/termux/mirrors/default $PREFIX/etc/termux/chosen_mirrors
-            chmod -R o+x $PREFIX/bin
-            
-            # 2. 安装依赖
-            echo "Installing dependencies..."
-            /entrypoint.sh bash -c "yes | pkg upgrade -y"
-            /entrypoint.sh pkg install -y nodejs-lts
-            mkdir -p /tmp/node20
-            ln -sf $PREFIX/bin /tmp/node20/bin
-            
-            # 3. 安装构建工具
-            echo "Installing build tools..."
-            /entrypoint.sh pkg install -y ninja clang git patchelf ccache tur-repo python3.10
-            ln -sf $PREFIX/bin/python3.10 $PREFIX/bin/python
-            ln -sf $PREFIX/bin/pip3.10 $PREFIX/bin/pip
-            
-            # 4. 构建项目
-            echo "Building project..."
-            cd /github/workspace
-            pip install nuitka
-            
-            mkdir -p dist
-            cd "src/$PROJECT_NAME"
-            python -m nuitka --module app --include-package=app --output-dir=dist --remove-output
-            cp ./dist/*.so ../../dist/
-            cd ../../dist/
-            mv app.cpython-310.so app.so
-            patchelf --set-rpath '' app.so
-            patchelf --replace-needed libpython3.10.so.1.0 libpython3.10.so app.so
-            
-            # 5. 复制产物到共享目录
-            echo "Copying artifacts..."
-            mkdir -p /tmp/node20
-            cp *.so /tmp/node20/
-            ls -la /tmp/node20
+              # 设置环境变量
+              export PROJECT_NAME=helloworld
+              export TERMUX_MAIN_PACKAGE_FORMAT=debian
+              export ANDROID_ROOT=/system
+              export ANDROID_DATA=/data
+              export PREFIX=/data/data/com.termux/files/usr
+              export HOME=/data/data/com.termux/files/home
+              export PATH=/data/data/com.termux/files/usr/bin
+              export TMPDIR=/data/data/com.termux/files/usr/tmp
+              export LANG=en_US.UTF-8
+              export TZ=UTC
+              
+              # 1. 准备环境
+              echo "Preparing environment..."
+              ln -sf $PREFIX/etc/termux/mirrors/default $PREFIX/etc/termux/chosen_mirrors
+              chmod -R o+x $PREFIX/bin
+              
+              # 2. 安装依赖
+              echo "Installing dependencies..."
+              /entrypoint.sh bash -c "yes | pkg upgrade -y"
+              /entrypoint.sh pkg install -y nodejs-lts
+              mkdir -p /tmp/node20
+              ln -sf $PREFIX/bin /tmp/node20/bin
+              
+              # 3. 安装构建工具
+              echo "Installing build tools..."
+              /entrypoint.sh pkg install -y ninja clang git patchelf ccache tur-repo python3.10
+              ln -sf $PREFIX/bin/python3.10 $PREFIX/bin/python
+              ln -sf $PREFIX/bin/pip3.10 $PREFIX/bin/pip
+              
+              # 4. 构建项目
+              echo "Building project..."
+              cd /github/workspace
+              pip install nuitka
+              
+              mkdir -p dist
+              cd "src/$PROJECT_NAME"
+              python -m nuitka --module app --include-package=app --output-dir=dist --remove-output
+              cp ./dist/*.so ../../dist/
+              cd ../../dist/
+              mv app.cpython-310.so app.so
+              patchelf --set-rpath '' app.so
+              patchelf --replace-needed libpython3.10.so.1.0 libpython3.10.so app.so
+              
+              # 5. 复制产物到共享目录
+              echo "Copying artifacts..."
+              mkdir -p /tmp/node20
+              cp *.so /tmp/node20/
+              echo "=== BUILD SUCCESS ==="
+              ls -la /tmp/node20
             '
-          # 挂载工作区和共享目录
-          mounts: |
-            type=bind,source=${{ github.workspace }},target=/github/workspace
-            type=bind,source=/tmp/node20,target=/tmp/node20
-          memory: 2048M
-          cpus: 2
-          platform: linux/${{ matrix.qemu_arch }}
-
+      
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: artifact-${{ matrix.architecture }}
           path: /tmp/node20/*.so
-
+          
 # name: 'Test Termux' # empty name
 # on: [push, pull_request]
 # env:
